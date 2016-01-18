@@ -11,14 +11,23 @@
 ## 'sp','raster','rgdal','foreach','snow','snowfall','doSNOW'
 
 dir.create('./log_files')
+
+## Remove problematic locality field--------------------------------
+script_file = './scripts/geog_filter/trim_raw_gbif.R'
+log_file = './log_files/trim_raw_gbif.log'
+input_file = './data/0019773-151016162008034.csv'
+
+cmd = paste('Rscript', script_file, input_file, '>', log_file, '2>&1')
+system(cmd, wait=F)
+
+## Break up GBIF data dump into smaller files-----------------------
 dir.create('./data/gbif_chunks')
 
-## Part I - Break up GBIF data dump into smaller files-----------------------
 script_file = './scripts/split-csv.py'
 options = '-v -d'
 nlines = '-n 1000000'
 log_file = './log_files/chunk_gbif.log'
-input_file = './data/myco-gbif-occurrences_extracted_151022.csv'
+input_file = './data/0019773-151016162008034-trimmed.csv'
 
 cmd = paste('python', script_file, options, nlines,
             '-o./data/gbif_chunks/chunk-', input_file, '>', log_file, '2>&1')
