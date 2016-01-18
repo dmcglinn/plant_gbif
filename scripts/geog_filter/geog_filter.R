@@ -40,7 +40,7 @@ sfLibrary(readr)
 registerDoSNOW(sfGetCluster())
 
 foreach(i = 1:length(file_names), .inorder = FALSE) %dopar% {
-    dat = read_csv(file.path(input_dir, file_names[i]))
+    dat = read_delim(file.path(input_dir, file_names[i]), delim='\t')
     ## drop duplicates as defined by 
     ## rows that have the same species name and coordinates 
     ## this filter will be carried once again when aggregating to the species
