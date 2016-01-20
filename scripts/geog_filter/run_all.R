@@ -33,35 +33,35 @@ cmd = paste('python', script_file, options, nlines,
             '-o./data/gbif_chunks/chunk-', input_file, '>', log_file, '2>&1')
 system(cmd, wait=F)
 
-## Part II - Prepare remotely sensed data for queries------------------------
+## Prepare remotely sensed data for queries------------------------
 script_file = './scripts/geog_filter/setup_geog_data.R'
 log_file = './log_files/setup_geog_data.log'
 
 cmd = paste('Rscript', script_file, '>', log_file, '2>&1')
 system(cmd, wait=F)
 
-## Part III - Geographically filter dataset----------------------------------
+## Filter dataset-------------------------------------------------
 script_file = './scripts/geog_filter/geog_filter.R'
 log_file = './log_files/geog_filter.log'
 
 cmd = paste('Rscript', script_file, '>', log_file, '2>&1')
 system(cmd, wait=F)
 
-## Part IV - Query remotely sensed data--------------------------------------
+## Query remotely sensed data--------------------------------------
 script_file = './scripts/geog_filter/climate_query.R'
 log_file = './log_files/climate_query.log'
 
 cmd = paste('Rscript', script_file, '>', log_file, '2>&1')
 system(cmd, wait=F)
 
-## Part V - Compile all records, drop remaining duplicates, and export-------
+## Compile all records, drop remaining duplicates, and export-------
 script_file = './scripts/geog_filter/export_all_records.R'
 log_file = './log_files/export_all_records.log'
 
 cmd = paste('Rscript', script_file, '>', log_file, '2>&1')
 system(cmd, wait=F)
 
-## Part VI - Summarize records, output quantiles
+## Summarize records, output quantiles-------------------------------
 script_file = './scripts/geog_filter/climate_summary.R'
 log_file = './log_files/climate_summary.log'
 
