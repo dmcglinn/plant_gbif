@@ -32,7 +32,37 @@ dir.create(output_dir)
 #files = sub('filter-', '', out)
 #file_names = file_names[!(sub('chunk-', '', file_names) %in% files)]
 
+flagged_issues = c("BASIS_OF_RECORD_INVALID",
+                   "CONTINENT_COUNTRY_MISMATCH",
+                   "CONTINENT_DERIVED_FROM_COORDINATES",
+                   "CONTINENT_INVALID",
+                   "COORDINATE_INVALID",
+                   "COORDINATE_OUT_OF_RANGE",
+                   "COORDINATE_REPROJECTION_FAILED",
+                   "COORDINATE_REPROJECTION_SUSPICIOUS",
+                   "COUNTRY_COORDINATE_MISMATCH",
+                   "COUNTRY_DERIVED_FROM_COORDINATES",
+                   "COUNTRY_INVALID",
+                   "COUNTRY_MISMATCH",
+                   "GEODETIC_DATUM_INVALID",
+                   "PRESUMED_NEGATED_LATITUDE",
+                   "PRESUMED_NEGATED_LONGITUDE",
+                   "PRESUMED_SWAPPED_COORDINATE",
+                   "TYPE_STATUS_INVALID",
+                   "ZERO_COORDINATE")
+#"IDENTIFIED_DATE_INVALID"
+#"IDENTIFIED_DATE_UNLIKELY"
+#"MODIFIED_DATE_INVALID"
+#"MODIFIED_DATE_UNLIKELY"
+#"RECORDED_DATE_INVALID"
+#"RECORDED_DATE_MISMATCH"
+#"RECORDED_DATE_UNLIKELY"
+#http://gbif.github.io/gbif-api/apidocs/org/gbif/api/vocabulary/OccurrenceIssue.html
+  
 load('./data/gbif_geog.Rdata')
+
+sp_list = read_csv('./data/Vessel_diameter_master_copy_Oct_2015_cleaned_sp.csv')
+sp_list = sort(unique(sp_list$Cleaned_species))
 
 sfInit(parallel=TRUE, cpus=24, type="SOCK")
 sfLibrary(raster)
@@ -44,8 +74,12 @@ foreach(i = 1:length(file_names), .inorder = FALSE) %dopar% {
     ## drop duplicates as defined by 
     ## rows that have the same species name and coordinates 
     ## this filter will be carried once again when aggregating to the species
-    filtering_columns = c('tankname', 'decimallatitude', 'decimallongitude')
+    filtering_columns = c('species', 'decimallatitude', 'decimallongitude')
     dat = subset(dat, !duplicated(dat[ , filtering_columns]))
+    ## filter records via GBIF issue column
+    dat = subset(dat, not_issue(dat$issue, flagged_issues))
+    ## filter records via species list
+    dat = subset(dat, dat$species %in% sp_list)
     ## drop rows that are duplicates according to the 'occurance id field'
     dat = subset(dat, !duplicated(dat$gbifid))
     ## Begin checking for coordinate issues
@@ -88,8 +122,8 @@ foreach(i = 1:length(file_names), .inorder = FALSE) %dopar% {
     geocode = ifelse(!gd_country & gd_continent, 1, geocode)
     ## begin process of outputing data
     dat = data.frame(dat, geocode, continent)
-    fields = c('gbifname', 'expandedname', 'tankname', 'basisofrecord',
-               'decimallatitude', 'decimallongitude', 'year', 'countrycode', 
+    fields = c('species', 'basisofrecord','issue',
+               'decimallatitude', 'decimallongitude', 'eventdate', 'countrycode', 
                'geocode', 'continent')
     dat = subset(dat, !is.na(geocode), fields)
     filename = sub('chunk-', 'filter-', file_names[i])
