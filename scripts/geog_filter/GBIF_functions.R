@@ -285,3 +285,10 @@ calc_hemi_quantile = function(lat) {
   out = c(north_quant, south_quant)
   return(out)
 }
+
+not_issue = function(gbif_issues, flagged_issues) {
+  issue = sapply(gbif_issues, function(y) 
+                 any(sapply(flagged_issues, function(x) 
+                            any(grepl(x, y), na.rm=T))))
+  return(!as.logical(issue))
+}
