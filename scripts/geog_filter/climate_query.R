@@ -37,6 +37,7 @@ load('./data/wwfeco.Rdata')
 file_names = dir(input_dir)[grep('filter-', dir(input_dir))]
 
 sfInit(parallel=TRUE, cpus=24, type="SOCK")
+sfLibrary(readr)
 sfLibrary(raster)
 sfLibrary(foreign)
 sfLibrary(nlme)
@@ -46,7 +47,7 @@ registerDoSNOW(sfGetCluster())
 foreach(i = 1:length(file_names), .inorder = FALSE) %dopar% {
     dat = read_csv(file.path(input_dir, file_names[i]))
     ## pull genus out of name column
-    genus = sapply(strsplit(as.character(dat$tankname),' '), function(x) unlist(x)[1])
+    genus = sapply(strsplit(as.character(dat$species),' '), function(x) unlist(x)[1])
     genus_list = sort(unique(genus))
     ## go through genus list and pull all records for each species together
     ## extract climate data and then export the information
