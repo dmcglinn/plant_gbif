@@ -43,39 +43,42 @@ sfLibrary(foreign)
 sfLibrary(nlme)
 registerDoSNOW(sfGetCluster())
 
+dat = read_csv(file.path(input_dir, file_names[1]))
+for(i in 2:length(file_names)) {
+    dat = rbind(dat, read_csv(file.path(input_dir, file_names[i])))
+}
+
+print('data loaded')
+
 ## create a seperate file for each genus
-foreach(i = 1:length(file_names), .inorder = FALSE) %dopar% {
-    dat = read_csv(file.path(input_dir, file_names[i]))
-    ## pull genus out of name column
-    genus = sapply(strsplit(as.character(dat$species),' '), function(x) unlist(x)[1])
-    genus_list = sort(unique(genus))
-    ## go through genus list and pull all records for each species together
-    ## extract climate data and then export the information
-    for (j in seq_along(genus_list)) { 
-        dat_temp = dat[genus == genus_list[j], ]
-        col_names = names(dat_temp)
-        coords = data.frame(Long=dat_temp$decimallongitude, Lat=dat_temp$decimallatitude)
-        clim = extract(bioStack, coords)
-        prod = extract(ndvi, coords)
-        P = extract(p_grid, coords)[ , c('Total.P', 'Labile.Inorganic.P', 'organic.P')]
-        soil = add.soil.data(coords)[ , c('TOTN', 'TAWC')]
-        if (nrow(dat_temp) == 1) {
-            dat_temp = data.frame(c(dat_temp, clim, prod, P, soil))
-        }            
-        else {
-            dat_temp = data.frame(dat_temp, clim, prod, P, soil)
-        }
-        eco_code = over(SpatialPoints(coords, CRS(proj4string(wwfeco))),
-                        wwfeco)$eco_code
-        dat_temp = data.frame(dat_temp, eco_code)
-        names(dat_temp) = c(col_names, names(bioStack), 'ndviAvg',
-                           'Total.P', 'Labile.Inorganic.P', 'organic.P',
-                           'TOTN', 'TAWC', 'eco_code')
-        out_file = paste(output_dir, genus_list[j], 
-                         strsplit(file_names[i], 'filter')[[1]][2], sep='')
-        write_csv(dat_temp, path=out_file)
-    }
-    print(paste('file', i, 'of', length(file_names), ep=' '))
+## pull genus out of name column
+genus = sapply(strsplit(as.character(dat$species),' '), function(x) unlist(x)[1])
+genus_list = sort(unique(genus))
+## go through genus list and pull all records for each species together
+## extract climate data and then export the information
+foreach (j=1:length(genus_list), .inorder=F) %dopar% { 
+  dat_temp = dat[genus == genus_list[j], ]
+  col_names = names(dat_temp)
+  coords = data.frame(Long=dat_temp$decimallongitude, Lat=dat_temp$decimallatitude)
+  clim = extract(bioStack, coords)
+  prod = extract(ndvi, coords)
+  P = extract(p_grid, coords)[ , c('Total.P', 'Labile.Inorganic.P', 'organic.P')]
+  soil = add.soil.data(coords)[ , c('TOTN', 'TAWC')]
+  if (nrow(dat_temp) == 1) {
+    dat_temp = data.frame(c(dat_temp, clim, prod, P, soil))
+  }            
+  else {
+    dat_temp = data.frame(dat_temp, clim, prod, P, soil)
+  }
+  eco_code = over(SpatialPoints(coords, CRS(proj4string(wwfeco))),
+                  wwfeco)$eco_code
+  dat_temp = data.frame(dat_temp, eco_code)
+  names(dat_temp) = c(col_names, names(bioStack), 'ndviAvg',
+                      'Total.P', 'Labile.Inorganic.P', 'organic.P',
+                      'TOTN', 'TAWC', 'eco_code')
+  out_file = paste(output_dir, genus_list[j], 
+                   strsplit(file_names[i], 'filter')[[1]][2], sep='')
+  write_csv(dat_temp, path=out_file)
 }
 
 sfStop()
